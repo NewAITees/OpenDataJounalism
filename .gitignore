@@ -181,3 +181,5 @@ cython_debug/
 
 .vscode
 
+*.csv
+estat_catalog/

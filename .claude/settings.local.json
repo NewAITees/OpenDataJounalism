@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.e-stat.go.jp)",
+      "Bash(uv run:*)"
+    ],
+    "deny": []
+  }
+}
