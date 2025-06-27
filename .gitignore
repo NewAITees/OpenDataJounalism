@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.so
 
+# uv lock file (should be regenerated)
+uv.lock
 # Distribution / packaging
 .Python
 build/
@@ -184,3 +186,9 @@ cython_debug/
 # Project specific data files are kept in repo for demo purposes
 # *.csv
 # estat_catalog/
+
+# Analysis output files
+analysis_output/
+data/mcp/
+*.png
+*.html

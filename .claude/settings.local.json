@@ -4,7 +4,10 @@
       "WebFetch(domain:www.e-stat.go.jp)",
       "Bash(uv run:*)",
       "Bash(uv python pin:*)",
-      "Bash(uv sync:*)"
+      "Bash(uv sync:*)",
+      "Bash(uv run:*)",
+      "Bash(ls:*)",
+      "Bash(uv:*)"
     ],
     "deny": []
   }
