@@ -223,7 +223,12 @@ class PopulationAnalysisReport:
             natural_change = births - deaths
 
             demographic_data.append(
-                {"year": year, "births": births, "deaths": deaths, "natural_change": natural_change}
+                {
+                    "year": year,
+                    "births": births,
+                    "deaths": deaths,
+                    "natural_change": natural_change,
+                }
             )
 
         return pd.DataFrame(demographic_data)

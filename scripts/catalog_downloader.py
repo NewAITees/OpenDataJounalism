@@ -258,12 +258,14 @@ class EStatCatalogDownloader:
                 field_code: {
                     "name": self.MAJOR_FIELDS.get(field_code, "unknown"),
                     "record_count": len(catalog),
-                    "organizations": catalog["GOV_ORG"].unique().tolist()
-                    if "GOV_ORG" in catalog.columns
-                    else [],
-                    "survey_years": sorted(catalog["SURVEY_DATE"].dropna().unique().tolist())
-                    if "SURVEY_DATE" in catalog.columns
-                    else [],
+                    "organizations": (
+                        catalog["GOV_ORG"].unique().tolist() if "GOV_ORG" in catalog.columns else []
+                    ),
+                    "survey_years": (
+                        sorted(catalog["SURVEY_DATE"].dropna().unique().tolist())
+                        if "SURVEY_DATE" in catalog.columns
+                        else []
+                    ),
                 }
                 for field_code, catalog in catalogs.items()
             },
@@ -300,12 +302,14 @@ class EStatCatalogDownloader:
                         "stat_name": row["STAT_NAME"],
                         "organization": row["GOV_ORG"],
                         "table_count": row["table_count"],
-                        "latest_survey": catalog[
-                            (catalog["STAT_NAME"] == row["STAT_NAME"])
-                            & (catalog["GOV_ORG"] == row["GOV_ORG"])
-                        ]["SURVEY_DATE"].max()
-                        if "SURVEY_DATE" in catalog.columns
-                        else None,
+                        "latest_survey": (
+                            catalog[
+                                (catalog["STAT_NAME"] == row["STAT_NAME"])
+                                & (catalog["GOV_ORG"] == row["GOV_ORG"])
+                            ]["SURVEY_DATE"].max()
+                            if "SURVEY_DATE" in catalog.columns
+                            else None
+                        ),
                     }
                 )
 

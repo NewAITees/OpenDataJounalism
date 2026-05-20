@@ -148,7 +148,11 @@ class MeaningfulHouseholdAnalyzer:
         print("🎨 包括的可視化作成開始...")
 
         fig, axes = plt.subplots(2, 2, figsize=(20, 16))
-        fig.suptitle("実際のe-statデータによる日本人口の包括的分析", fontsize=18, fontweight="bold")
+        fig.suptitle(
+            "実際のe-statデータによる日本人口の包括的分析",
+            fontsize=18,
+            fontweight="bold",
+        )
 
         # 1. 全国人口推移 (時系列)
         ax1 = axes[0, 0]
@@ -191,7 +195,9 @@ class MeaningfulHouseholdAnalyzer:
 
             colors = ["#FF6B6B", "#4ECDC4", "#45B7D1"]
             bars = ax2.bar(
-                latest_gender.index, latest_gender.values, color=colors[: len(latest_gender)]
+                latest_gender.index,
+                latest_gender.values,
+                color=colors[: len(latest_gender)],
             )
             ax2.set_title(f"{latest_year}年 男女別人口", fontsize=14, fontweight="bold")
             ax2.set_ylabel("人口 (千人)")

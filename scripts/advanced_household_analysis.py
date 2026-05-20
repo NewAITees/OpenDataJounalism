@@ -196,7 +196,11 @@ class AdvancedHouseholdAnalyzer:
                         )
                     elif confidence > 0.5:
                         analysis_summary["medium_confidence_sources"].append(
-                            {"category": category, "query": query, "confidence": confidence}
+                            {
+                                "category": category,
+                                "query": query,
+                                "confidence": confidence,
+                            }
                         )
                     else:
                         analysis_summary["data_gaps"].append(
@@ -232,7 +236,13 @@ class AdvancedHouseholdAnalyzer:
             item["confidence"] for item in analysis_summary["high_confidence_sources"]
         ]
         if confidence_scores:
-            ax1.hist(confidence_scores, bins=10, alpha=0.7, color="skyblue", edgecolor="black")
+            ax1.hist(
+                confidence_scores,
+                bins=10,
+                alpha=0.7,
+                color="skyblue",
+                edgecolor="black",
+            )
             ax1.set_title("データソース信頼度分布")
             ax1.set_xlabel("信頼度スコア")
             ax1.set_ylabel("データソース数")
@@ -279,7 +289,9 @@ class AdvancedHouseholdAnalyzer:
         ]
 
         bars = ax2.bar(
-            categories, availability_counts, color=["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"]
+            categories,
+            availability_counts,
+            color=["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"],
         )
         ax2.set_title("分析カテゴリ別データ利用可能性")
         ax2.set_ylabel("高信頼度データソース数")
@@ -322,7 +334,11 @@ class AdvancedHouseholdAnalyzer:
         colors = ["#2ECC71", "#F39C12", "#E74C3C"]
 
         wedges, texts, autotexts = ax4.pie(
-            quality_counts, labels=quality_labels, colors=colors, autopct="%1.1f%%", startangle=90
+            quality_counts,
+            labels=quality_labels,
+            colors=colors,
+            autopct="%1.1f%%",
+            startangle=90,
         )
         ax4.set_title("データ品質分布")
 

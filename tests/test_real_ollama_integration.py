@@ -69,9 +69,21 @@ def test_ollama_integration():
 
         # テストクエリ
         test_queries = [
-            {"query": "東京都の人口推移が知りたい", "region": "東京都", "time_period": None},
-            {"query": "最新の完全失業率データを取得したい", "region": None, "time_period": "最新"},
-            {"query": "都道府県別の世帯数を比較したい", "region": None, "time_period": None},
+            {
+                "query": "東京都の人口推移が知りたい",
+                "region": "東京都",
+                "time_period": None,
+            },
+            {
+                "query": "最新の完全失業率データを取得したい",
+                "region": None,
+                "time_period": "最新",
+            },
+            {
+                "query": "都道府県別の世帯数を比較したい",
+                "region": None,
+                "time_period": None,
+            },
             {"query": "2020年の年齢別人口構成", "region": None, "time_period": "2020"},
         ]
 

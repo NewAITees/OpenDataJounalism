@@ -1,12 +1,12 @@
 """e-stat Query Translator のテスト"""
 
-import pytest
-from pathlib import Path
-import tempfile
 import shutil
-
 import sys
+import tempfile
 from pathlib import Path
+
+import pytest
+
 sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
 from opendatajounalism.mcp import EstatQueryTranslator, QueryResult
 
@@ -19,7 +19,7 @@ def temp_data_dir():
     shutil.rmtree(temp_dir)
 
 
-@pytest.fixture  
+@pytest.fixture
 def translator(temp_data_dir):
     """テスト用のTranslatorインスタンス"""
     return EstatQueryTranslator(data_dir=temp_data_dir)

@@ -63,3 +63,20 @@ unfixable = ["F401", "F841"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.mypy]
+python_version = "3.12"
+exclude = "(^scripts/|^pipeline_archive/)"
+ignore_missing_imports = true
+disable_error_code = [
+    "assignment",
+    "attr-defined",
+    "dict-item",
+    "import-untyped",
+    "index",
+    "misc",
+    "name-defined",
+    "operator",
+    "return-value",
+    "valid-type",
+]

@@ -210,7 +210,9 @@ class RealHouseholdAnalyzer:
         }
 
         bars = ax1.bar(
-            data_info.keys(), data_info.values(), color=["#3498db", "#e74c3c", "#2ecc71", "#f39c12"]
+            data_info.keys(),
+            data_info.values(),
+            color=["#3498db", "#e74c3c", "#2ecc71", "#f39c12"],
         )
         ax1.set_title("データ構造概要")
         ax1.set_ylabel("件数")
@@ -238,10 +240,24 @@ class RealHouseholdAnalyzer:
                 ax2.set_xlabel("値")
                 ax2.set_ylabel("頻度")
             else:
-                ax2.text(0.5, 0.5, "データなし", transform=ax2.transAxes, ha="center", va="center")
+                ax2.text(
+                    0.5,
+                    0.5,
+                    "データなし",
+                    transform=ax2.transAxes,
+                    ha="center",
+                    va="center",
+                )
                 ax2.set_title("数値データ分布")
         else:
-            ax2.text(0.5, 0.5, "数値データなし", transform=ax2.transAxes, ha="center", va="center")
+            ax2.text(
+                0.5,
+                0.5,
+                "数値データなし",
+                transform=ax2.transAxes,
+                ha="center",
+                va="center",
+            )
             ax2.set_title("数値データ分布")
 
         # 3. 上位カテゴリ（利用可能な場合）
@@ -265,7 +281,14 @@ class RealHouseholdAnalyzer:
                     va="center",
                 )
         else:
-            ax3.text(0.5, 0.5, "カテゴリ列なし", transform=ax3.transAxes, ha="center", va="center")
+            ax3.text(
+                0.5,
+                0.5,
+                "カテゴリ列なし",
+                transform=ax3.transAxes,
+                ha="center",
+                va="center",
+            )
         ax3.set_title("主要カテゴリ分布")
 
         # 4. データ品質評価

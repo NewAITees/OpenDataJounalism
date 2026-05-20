@@ -2,4 +2,4 @@
 
 from .estat_query_translator import EstatQueryTranslator, QueryResult
 
-__all__ = ['EstatQueryTranslator', 'QueryResult']
+__all__ = ["EstatQueryTranslator", "QueryResult"]

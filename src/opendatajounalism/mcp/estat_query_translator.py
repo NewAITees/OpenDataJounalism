@@ -195,7 +195,12 @@ class EstatQueryTranslator:
                 "available_areas": ["全国", "都道府県"],
                 "categories": {
                     "cdCat01": {"001": "総人口", "002": "男", "003": "女"},
-                    "cdCat02": {"01": "総数", "02": "0～14歳", "03": "15～64歳", "04": "65歳以上"},
+                    "cdCat02": {
+                        "01": "総数",
+                        "02": "0～14歳",
+                        "03": "15～64歳",
+                        "04": "65歳以上",
+                    },
                 },
             },
             {
@@ -233,7 +238,8 @@ class EstatQueryTranslator:
         cursor = conn.cursor()
 
         # 統計表情報テーブル
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE stats_tables (
                 stats_data_id TEXT PRIMARY KEY,
                 table_name TEXT NOT NULL,
@@ -246,7 +252,8 @@ class EstatQueryTranslator:
                 categories TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
 
         # サンプルデータを挿入
         for table in self.sample_stats_tables:

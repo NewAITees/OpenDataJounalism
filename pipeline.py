@@ -32,19 +32,15 @@ ESTAT_BASE = "https://api.e-stat.go.jp/rest/3.0/app/json/getStatsData"
 DB_PATH = Path("data/estat_cache.db")
 PAGE_SIZE = 10000
 
+# e-Stat API で実在を確認済みの統計表ID（STATUS=0 のもののみ）
 STAT_CATALOG: dict[str, str] = {
     "0003036516": "毎月勤労統計：産業別・都道府県別の賃金・労働時間",
-    "0000060033": "家計調査：二人以上世帯の消費支出・収入",
-    "0000060100": "消費者物価指数：全国・地域別の物価変動",
+    "0000040101": "労働力調査：就業・失業の動向",
     "0000030001": "学校基本調査：進学率・学校数・生徒数",
-    "0000020602": "住民基本台帳人口移動報告：都道府県間転入・転出",
     "0000020301": "農業センサス：農家数・農地面積・農業産出額",
-    "0000060073": "商業統計：売場面積・年間販売額・事業所数",
-    "0000060046": "工業統計：製造品出荷額・従業者数・付加価値",
     "0000030047": "医療施設調査：病院・診療所・病床数の地域分布",
-    "0003215843": "人口動態統計：出生率・死亡率・婚姻率・離婚率",
-    "0000060392": "サービス産業動向調査：売上高・従業者数",
     "0000030005": "社会生活基本調査：生活時間・余暇活動",
+    "0000020101": "人口推計：都道府県別・月次人口",
 }
 
 CATALOG_DB = Path("data/mcp/catalog_index.db")
@@ -163,7 +159,9 @@ def _load_col_descriptions_from_metadata_db(table_id: str) -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 
-def _extract_cls_info(stat_data: dict[str, Any]) -> dict[str, tuple[str, dict[str, str]]]:
+def _extract_cls_info(
+    stat_data: dict[str, Any],
+) -> dict[str, tuple[str, dict[str, str]]]:
     """CLASS_INF から {cls_id: (col_name, {code: name})} を構築する。"""
     class_objs = stat_data.get("CLASS_INF", {}).get("CLASS_OBJ", [])
     if isinstance(class_objs, dict):
@@ -283,14 +281,16 @@ def _ensure_cached(stat_id: str, theme: str, angle: str) -> dict[str, Any]:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
 
-    conn.execute("""
+    conn.execute(
+        """
         CREATE TABLE IF NOT EXISTS fetch_meta (
             stat_id    TEXT PRIMARY KEY,
             fetched_at TEXT,
             total_rows INTEGER,
             col_names  TEXT
         )
-    """)
+    """
+    )
     conn.commit()
 
     row = conn.execute(

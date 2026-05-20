@@ -86,19 +86,34 @@ class RegionalPredictionAnalyzer:
             "mega_regions": {
                 "prefectures": list(mega_regions.index),
                 "population_range": f"{mega_regions.min():,.0f}-{mega_regions.max():,.0f}千人",
-                "characteristics": ["経済中心地", "高所得", "多様な雇用機会", "高い住居費"],
+                "characteristics": [
+                    "経済中心地",
+                    "高所得",
+                    "多様な雇用機会",
+                    "高い住居費",
+                ],
                 "predicted_single_household_rate": 32,  # 理論値
             },
             "large_regions": {
                 "prefectures": list(large_regions.index),
                 "population_range": f"{large_regions.min():,.0f}-{large_regions.max():,.0f}千人",
-                "characteristics": ["地方中核都市", "中程度所得", "安定雇用", "適度な住居費"],
+                "characteristics": [
+                    "地方中核都市",
+                    "中程度所得",
+                    "安定雇用",
+                    "適度な住居費",
+                ],
                 "predicted_single_household_rate": 28,
             },
             "medium_regions": {
                 "prefectures": list(medium_regions.index),
                 "population_range": f"{medium_regions.min():,.0f}-{medium_regions.max():,.0f}千人",
-                "characteristics": ["地方都市", "平均以下所得", "限定的雇用", "低い住居費"],
+                "characteristics": [
+                    "地方都市",
+                    "平均以下所得",
+                    "限定的雇用",
+                    "低い住居費",
+                ],
                 "predicted_single_household_rate": 25,
             },
             "small_regions": {
@@ -124,7 +139,12 @@ class RegionalPredictionAnalyzer:
             "mega_regions": {
                 "prefectures": ["東京都", "神奈川県", "大阪府"],
                 "population_range": "68,000-110,000千人",
-                "characteristics": ["経済中心地", "高所得", "多様な雇用機会", "高い住居費"],
+                "characteristics": [
+                    "経済中心地",
+                    "高所得",
+                    "多様な雇用機会",
+                    "高い住居費",
+                ],
                 "predicted_single_household_rate": 32,
             },
             "large_regions": {
@@ -138,13 +158,30 @@ class RegionalPredictionAnalyzer:
                     "静岡県",
                 ],
                 "population_range": "27,000-58,000千人",
-                "characteristics": ["地方中核都市", "中程度所得", "安定雇用", "適度な住居費"],
+                "characteristics": [
+                    "地方中核都市",
+                    "中程度所得",
+                    "安定雇用",
+                    "適度な住居費",
+                ],
                 "predicted_single_household_rate": 28,
             },
             "medium_regions": {
-                "prefectures": ["茨城県", "京都府", "新潟県", "宮城県", "長野県", "その他15県"],
+                "prefectures": [
+                    "茨城県",
+                    "京都府",
+                    "新潟県",
+                    "宮城県",
+                    "長野県",
+                    "その他15県",
+                ],
                 "population_range": "10,000-27,000千人",
-                "characteristics": ["地方都市", "平均以下所得", "限定的雇用", "低い住居費"],
+                "characteristics": [
+                    "地方都市",
+                    "平均以下所得",
+                    "限定的雇用",
+                    "低い住居費",
+                ],
                 "predicted_single_household_rate": 25,
             },
             "small_regions": {
@@ -191,7 +228,13 @@ class RegionalPredictionAnalyzer:
     def calculate_combination_effect(self, region_type, age, income, employment, base_rate):
         """組み合わせ効果の計算"""
         # 年代効果
-        age_multipliers = {"20代": 1.4, "30代": 0.8, "40代": 0.9, "50代": 1.1, "60代以上": 1.2}
+        age_multipliers = {
+            "20代": 1.4,
+            "30代": 0.8,
+            "40代": 0.9,
+            "50代": 1.1,
+            "60代以上": 1.2,
+        }
 
         # 所得効果（地域により異なる）
         income_effects = {
@@ -441,8 +484,22 @@ class RegionalPredictionAnalyzer:
         x = np.arange(len(regions))
         width = 0.35
 
-        ax6.bar(x - width / 2, change_2030, width, label="2030年変化", color="orange", alpha=0.8)
-        ax6.bar(x + width / 2, change_2040, width, label="2040年変化", color="red", alpha=0.8)
+        ax6.bar(
+            x - width / 2,
+            change_2030,
+            width,
+            label="2030年変化",
+            color="orange",
+            alpha=0.8,
+        )
+        ax6.bar(
+            x + width / 2,
+            change_2040,
+            width,
+            label="2040年変化",
+            color="red",
+            alpha=0.8,
+        )
 
         ax6.set_title("地域別予測変化率", fontsize=12, fontweight="bold")
         ax6.set_ylabel("変化率 (ポイント)")
@@ -542,7 +599,12 @@ class RegionalPredictionAnalyzer:
         return output_file
 
     def create_final_comprehensive_report(
-        self, regional_data, combination_effects, extreme_combinations, predictions, viz_file
+        self,
+        regional_data,
+        combination_effects,
+        extreme_combinations,
+        predictions,
+        viz_file,
     ):
         """最終包括レポート作成"""
         print("📝 最終包括レポート作成...")
@@ -857,7 +919,11 @@ class RegionalPredictionAnalyzer:
 
             # 5. 最終包括レポート
             report_file = self.create_final_comprehensive_report(
-                regional_data, combination_effects, extreme_combinations, predictions, viz_file
+                regional_data,
+                combination_effects,
+                extreme_combinations,
+                predictions,
+                viz_file,
             )
 
             print("\n" + "=" * 80)
