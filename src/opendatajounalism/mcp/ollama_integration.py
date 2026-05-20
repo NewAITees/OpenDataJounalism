@@ -258,8 +258,6 @@ class OllamaStatsMCP:
         prompt = f"""
 統計表ID「{stats_table_id}」で利用可能な軸コードとその具体的な値について説明してください。
 
-{stats_context if hasattr(self, "stats_context") else ""}
-
 例えば:
 - cdCat01で「001」は何を意味するか
 - cdAreaで「13000」は何を意味するか
@@ -399,11 +397,14 @@ e-stat政府統計データベース（統計表総数: {self.real_stats_data.ge
 
     def get_ollama_status(self) -> Dict[str, any]:
         """Ollama接続状況を取得"""
+        stats_tables_count = 0
+        if isinstance(self.real_stats_data, dict):
+            stats_tables_count = int(self.real_stats_data.get("统计表总数", 0) or 0)
         return {
             "available": self.available,
             "base_url": self.base_url,
             "model": self.model,
-            "stats_tables_count": sum(len(tables) for tables in self.stats_knowledge_base.values()),
+            "stats_tables_count": stats_tables_count,
         }
 
 

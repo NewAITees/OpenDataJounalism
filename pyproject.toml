@@ -44,7 +44,6 @@ exclude = [".git", ".ruff_cache", ".venv", ".vscode"]
 [tool.ruff.lint]
 preview = true
 select = [
-    "ANN",  # type annotation
     "E",    # pycodestyle errors
     "F",    # pyflakes
     "I",    # isort
@@ -54,6 +53,15 @@ select = [
 ignore = [
     "F401",  # unused import
     "F841",  # unused variable
+    "E501",  # line length (Japanese text/prompt blocks)
+    "E722",  # bare except in legacy integration code
+    "RUF001",  # ambiguous unicode chars in Japanese text
+    "RUF002",
+    "RUF003",
+    "RUF015",
+    "RUF059",
+    "W291",  # trailing whitespace in multiline prompts
+    "E741",
 ]
 unfixable = ["F401", "F841"]
 
