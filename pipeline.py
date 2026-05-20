@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import re
 import sqlite3
 import time
@@ -31,16 +32,45 @@ OLLAMA_MODEL = "qwen3.5:9b"
 ESTAT_BASE = "https://api.e-stat.go.jp/rest/3.0/app/json/getStatsData"
 DB_PATH = Path("data/estat_cache.db")
 PAGE_SIZE = 10000
+MULTI_FETCH_COUNT = 3
 
 # e-Stat API で実在を確認済みの統計表ID（STATUS=0 のもののみ）
 STAT_CATALOG: dict[str, str] = {
+    # --- 労働・賃金 ---
     "0003036516": "毎月勤労統計：産業別・都道府県別の賃金・労働時間",
     "0000040101": "労働力調査：就業・失業の動向",
-    "0000030001": "学校基本調査：進学率・学校数・生徒数",
-    "0000020301": "農業センサス：農家数・農地面積・農業産出額",
-    "0000030047": "医療施設調査：病院・診療所・病床数の地域分布",
-    "0000030005": "社会生活基本調査：生活時間・余暇活動",
+    "0003356101": "毎月勤労統計：産業・事業所規模別の賃金と雇用",
+    "0003296362": "賃金構造基本統計：産業別所定内賃金の構成",
+    "0003296512": "賃金構造基本統計：賃金分布",
+    "0003004521": "就業構造基本調査2007：雇用形態・従業上の地位",
+    "0003086553": "就業構造基本調査2012：雇用形態・従業上の地位",
+    # --- 人口・世帯 ---
     "0000020101": "人口推計：都道府県別・月次人口",
+    "0000150041": "国勢調査1993：人口・世帯・住居の状況",
+    "0000150271": "国勢調査2006：人口・世帯・住居の状況",
+    # --- 家計・消費 ---
+    "0000010112": "家計調査：世帯の収入・支出・貯蓄",
+    "0000030005": "社会生活基本調査：生活時間・余暇活動",
+    "0003085504": "社会生活基本調査：行動者率と行動時間",
+    # --- 農林水産業 ---
+    "0000020301": "農業センサス：農家数・農地面積・農業産出額",
+    "0002065075": "農業経営統計2021：農産物生産費・経営収支",
+    "0002112323": "農業経営統計2022：農産物生産費・経営収支",
+    "0001993642": "農業経営統計2020：農地・市町村・経営収支",
+    # --- 医療・福祉 ---
+    "0000030047": "医療施設調査：病院・診療所・病床数の地域分布",
+    "0004002240": "医療統計：施設・在宅サービス・次回受診施設",
+    "0003276720": "医療施設調査：施設数・病床数（最新）",
+    "0003079737": "社会福祉施設等調査：施設数・定員・在所者数",
+    # --- 教育・文化 ---
+    "0000030001": "学校基本調査：進学率・学校数・生徒数",
+    "0003021794": "社会教育調査：公民館・図書館・博物館数",
+    # --- 住宅・土地 ---
+    "0000080407": "住宅土地統計1993：住宅の種類・所有関係・建て方",
+    "0003355288": "住宅土地統計2018：住宅の種類・所有関係・建て方",
+    # --- 産業・経済 ---
+    "0003179201": "産業利用統計：農業用施設・機械の利用状況",
+    "0003463798": "国民経済計算：GDP構成要素の推移",
 }
 
 CATALOG_DB = Path("data/mcp/catalog_index.db")
@@ -332,10 +362,10 @@ def _ensure_cached(stat_id: str, theme: str, angle: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def select_topic() -> dict[str, str]:
+def select_topic() -> dict[str, Any]:
     """
     catalog_index.db + STAT_CATALOG + lessons.md を組み合わせて
-    Ollamaに未使用の統計IDを選ばせる。
+    未使用統計IDからランダムに複数選び、記事テーマを返す。
     """
     lessons_path = Path("docs/lessons.md")
     lessons = lessons_path.read_text(encoding="utf-8") if lessons_path.exists() else ""
@@ -348,15 +378,18 @@ def select_topic() -> dict[str, str]:
                 if sid in line:
                     used_ids.add(sid)
 
-    available = {k: v for k, v in STAT_CATALOG.items() if k not in used_ids}
-    if not available:
-        available = STAT_CATALOG  # 全使用済みならリセット
+    available_ids = [k for k in STAT_CATALOG if k not in used_ids]
+    if not available_ids:
+        available_ids = list(STAT_CATALOG.keys())  # 全使用済みならリセット
+    random.shuffle(available_ids)
+    selected_ids = available_ids[: min(MULTI_FETCH_COUNT, len(available_ids))]
 
     # catalog_index.db から追加情報を取得してプロンプトを強化
     catalog_db_entries = _load_catalog_from_db()
 
     catalog_lines: list[str] = []
-    for sid, desc in available.items():
+    for sid in selected_ids:
+        desc = STAT_CATALOG[sid]
         db_info = catalog_db_entries.get(sid, {})
         if db_info:
             keywords = db_info.get("keywords", "[]")
@@ -376,16 +409,16 @@ def select_topic() -> dict[str, str]:
     used_text = "\n".join(f"- {sid}" for sid in used_ids) or "なし"
 
     prompt = f"""あなたはデータジャーナリストです。
-以下のe-Stat統計カタログから、最も面白い記事が書けそうな統計を1つ選んでください。
+以下の候補統計を組み合わせて、1本の複合記事テーマを作ってください。
 
 【利用可能な統計】
 {catalog_text}
 
-【過去に使用済み（選択禁止）】
+【過去に使用済み（参考）】
 {used_text}
 
 選んだ統計について、以下のJSON形式のみで回答（他のテキスト不要）:
-{{"stat_id": "統計ID（10桁の数字）", "theme": "記事テーマ（20字以内）", "angle": "切り口・問い（30字以内）"}}"""
+{{"theme": "記事テーマ（30字以内）", "angle": "切り口・問い（40字以内）"}}"""
 
     raw = _call_ollama(prompt)
 
@@ -393,31 +426,37 @@ def select_topic() -> dict[str, str]:
         m = re.search(r"\{.*?\}", raw, re.DOTALL)
         if m:
             result = json.loads(m.group())
-            if result.get("stat_id") in STAT_CATALOG:
-                print(
-                    f"  [topic] {result['stat_id']}: {result.get('theme')} / {result.get('angle')}"
-                )
-                return result
+            theme = result.get("theme", "")
+            angle = result.get("angle", "")
+            if theme:
+                print(f"  [topic] {selected_ids}: {theme} / {angle}")
+                return {"stat_ids": selected_ids, "theme": theme, "angle": angle}
     except Exception:
         pass
 
-    # フォールバック：未使用IDの先頭
-    fallback_id = next(iter(available))
-    print(f"  [topic] フォールバック: {fallback_id}")
+    print(f"  [topic] フォールバック: {selected_ids}")
     return {
-        "stat_id": fallback_id,
-        "theme": STAT_CATALOG[fallback_id][:20],
-        "angle": "地域格差と時系列変化を探る",
+        "stat_ids": selected_ids,
+        "theme": "複数統計の比較レポート",
+        "angle": "地域差と時系列の共通パターンを探る",
     }
 
 
 def fetch_data() -> dict[str, Any]:
-    """トピック選択 → DBキャッシュ確認/全件取得 → 軽量な情報dictを返す。"""
+    """複数トピック選択 → DBキャッシュ確認/全件取得 → 軽量情報を返す。"""
     topic = select_topic()
-    return _ensure_cached(topic["stat_id"], topic["theme"], topic["angle"])
+    datasets: list[dict[str, Any]] = []
+    for stat_id in topic["stat_ids"]:
+        datasets.append(_ensure_cached(stat_id, topic["theme"], topic["angle"]))
+    return {
+        "theme": topic["theme"],
+        "angle": topic["angle"],
+        "datasets": datasets,
+        "selected_ids": topic["stat_ids"],
+    }
 
 
-def analyze(info: dict[str, Any]) -> dict[str, Any]:
+def _analyze_single(info: dict[str, Any]) -> dict[str, Any]:
     """
     SQLite上でGROUP BY集計のみ実施。
     全データはDBのままでメモリに乗せない。
@@ -524,37 +563,63 @@ def analyze(info: dict[str, Any]) -> dict[str, Any]:
     return analysis
 
 
+def analyze(info: dict[str, Any]) -> dict[str, Any]:
+    """複数統計を個別分析し、横断的な要約を作る。"""
+    dataset_analyses = [_analyze_single(d) for d in info["datasets"]]
+    total_rows = sum(a["total_rows"] for a in dataset_analyses)
+    combined_findings: list[str] = []
+    for a in dataset_analyses:
+        for f in a["top_findings"][:2]:
+            combined_findings.append(f"[{a['stat_id']}] {f}")
+
+    return {
+        "theme": info["theme"],
+        "angle": info["angle"],
+        "selected_ids": info["selected_ids"],
+        "total_rows": total_rows,
+        "dataset_analyses": dataset_analyses,
+        "combined_findings": combined_findings[:8],
+    }
+
+
 def generate_story(analysis: dict[str, Any]) -> str:
     """分析結果をもとにOllamaで記事を生成し output/story.md に保存する。"""
-    trend_text = "\n".join(f"  {t['period']}: {t['avg']}" for t in analysis["time_trend"][:12])
-    region_text = "\n".join(f"  {r['region']}: {r['avg']}" for r in analysis["regional_diff"][:10])
+    blocks: list[str] = []
+    for item in analysis["dataset_analyses"]:
+        trend_text = "\n".join(f"  {t['period']}: {t['avg']}" for t in item["time_trend"][:6])
+        region_text = "\n".join(f"  {r['region']}: {r['avg']}" for r in item["regional_diff"][:6])
+        blocks.append(
+            f"""統計ID: {item["stat_id"]}
+行数: {item["total_rows"]:,}
+主要発見:
+{chr(10).join(f"- {f}" for f in item["top_findings"])}
+時系列:
+{trend_text or "（データなし）"}
+地域差:
+{region_text or "（データなし）"}"""
+        )
+    multi_dataset_text = "\n\n".join(blocks)
 
     prompt = f"""あなたは日本のデータジャーナリストです。
 以下の統計分析結果をもとに、一般市民が関心を持てる日本語の記事を書いてください。
 
-【統計ID】{analysis["stat_id"]}（e-Stat実データ、{analysis["total_rows"]:,}行）
+【統計ID群】{", ".join(analysis["selected_ids"])}（e-Stat実データ、合計{analysis["total_rows"]:,}行）
 【テーマ】{analysis["theme"]}
 【切り口】{analysis["angle"]}
 
-【基本統計】
-平均: {analysis["value_stats"].get("mean", "N/A")} / 最大: {analysis["value_stats"].get("max", "N/A")} / 最小: {analysis["value_stats"].get("min", "N/A")}
+【データセット別サマリ】
+{multi_dataset_text}
 
-【時系列変化】
-{trend_text or "（データなし）"}
-
-【地域差（高い順）】
-{region_text or "（データなし）"}
-
-【主要発見】
-{chr(10).join(f"・{f}" for f in analysis["top_findings"])}
+【横断主要発見】
+{chr(10).join(f"・{f}" for f in analysis["combined_findings"])}
 
 【記事の要件】
 1. 読者を引き込む問いかけで書き始める
-2. 上記の実数値を具体的に引用する（統計ID {analysis["stat_id"]} のデータより）
-3. 時系列・地域比較のどちらかを必ず含める
+2. 上記の実数値を具体的に引用する（統計ID群から最低2つ引用）
+3. 複数統計を比較して相関や関係性の仮説を述べる
 4. 数値の羅列でなく、パターン・変化・異常値の洞察を書く
 5. 800〜1200字程度、Markdown形式
-6. 末尾に「データ出典: e-Stat 統計ID {analysis["stat_id"]}」を明記
+6. 末尾に「データ出典: e-Stat 統計ID ...」を明記
 
 記事のみ出力（前置き・説明不要）:"""
 
