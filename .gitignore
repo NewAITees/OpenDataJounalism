@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+runs/
+output/
+
 # uv lock file (should be regenerated)
 uv.lock
 # Distribution / packaging
