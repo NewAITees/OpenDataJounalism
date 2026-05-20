@@ -1,0 +1,18 @@
+ollama:
+  url: "http://localhost:11434/api/generate"
+  model: "qwen3.5:9b"
+  timeout: 600
+  options:
+    temperature: 0.7
+    num_predict: 8192
+    num_ctx: 8192
+
+pipeline:
+  timeout: 1800  # 秒: pipeline.py 1回の最大実行時間（30分）
+
+paths:
+  program_md: "docs/program.md"
+  lessons_md: "docs/lessons.md"
+  output_dir: "output"
+  runs_dir: "runs"
+  best_pipeline: "pipeline_archive/pipeline_best.py"
