@@ -20,13 +20,20 @@ from infra.storage import load_dataframe, read_json, write_json
 
 matplotlib.use("Agg")
 
-_jp_fonts = [
-    f.name
-    for f in fm.fontManager.ttflist
-    if any(k in f.name for k in ("Gothic", "Meiryo", "Yu", "Noto"))
+# 日本語グリフを含むフォントを優先順で探す
+_JP_FONT_PRIORITY = [
+    "BIZ UDGothic",
+    "Meiryo",
+    "Yu Gothic",
+    "MS Gothic",
+    "Noto Sans CJK JP",
+    "HGGothicM",
 ]
-if _jp_fonts:
-    plt.rcParams["font.family"] = _jp_fonts[0]
+_available = {f.name for f in fm.fontManager.ttflist}
+_jp_font = next((f for f in _JP_FONT_PRIORITY if f in _available), None)
+if _jp_font:
+    plt.rcParams["font.family"] = _jp_font
+plt.rcParams["axes.unicode_minus"] = False
 
 
 # ---------------------------------------------------------------------------
