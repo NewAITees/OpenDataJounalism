@@ -22,6 +22,7 @@ import stages.s02_read as s02  # noqa: E402
 import stages.s03_plan as s03  # noqa: E402
 import stages.s04_analyze as s04  # noqa: E402
 import stages.s05_evaluate as s05  # noqa: E402
+import stages.s05b_interpret as s05b  # noqa: E402
 import stages.s06_draft as s06  # noqa: E402
 import stages.s07_verify as s07  # noqa: E402
 import stages.s08_report as s08  # noqa: E402
@@ -84,12 +85,20 @@ def run_cycle() -> bool:
         print("  [ABORT] 分析方針が確定しませんでした。このサイクルをスキップします。")
         return False
 
-    # --- 06→07 ループ（ドラフト→検証）---
+    # --- 5b: data_factsの数値をAIが解釈 ---
+    print("[05b] 数値の意味を解釈")
+    try:
+        s05b.run(work_dir)
+    except Exception as e:
+        print(f"  [WARN] 解釈失敗（スキップ）: {e}")
+
+    # --- 06→07 ループ（ドラフト→検証、NG理由を次回に引き継ぐ）---
     verified = False
+    ng_reason = ""
     for draft_attempt in range(1, MAX_DRAFT_RETRIES + 1):
         print(f"[06] ドラフト記事生成 (試行 {draft_attempt}/{MAX_DRAFT_RETRIES})")
         try:
-            s06.run(work_dir)
+            s06.run(work_dir, ng_reason=ng_reason)
         except Exception as e:
             print(f"  [ERROR] {e}")
             continue
@@ -104,7 +113,12 @@ def run_cycle() -> bool:
         if verify.get("ok"):
             verified = True
             break
-        print("  → NG: 書き直します")
+
+        # NG理由を次の06に渡す
+        issues = verify.get("issues", [])
+        fix = verify.get("fix_instructions", "")
+        ng_reason = f"問題点: {'; '.join(issues)}\n修正指示: {fix}"
+        print(f"  → NG: {issues[0] if issues else ''} / 修正して書き直します")
 
     # 検証NGでも08には進む（fix_instructionsで修正する）
     print("[08] 最終レポート出力")

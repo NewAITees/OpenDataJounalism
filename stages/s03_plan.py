@@ -1,6 +1,7 @@
 """
-ステージ3: 分析方針を決める（2データセット対応）
-入力: work/01_meta_A.json, work/01_meta_B.json, work/01_common_axes.json, work/02_reading.md
+ステージ3: 分析方針を決める
+入力: work/01_meta_A.json, work/01_meta_B.json
+      work/01_common_axes.json, work/02_reading.md, work/02_verdict.json
 出力: work/03_plan.json
 """
 
@@ -27,38 +28,51 @@ def run(work_dir: Path) -> dict:
     common = read_json(work_dir / "01_common_axes.json")
     reading = read_text(work_dir / "02_reading.md")
 
-    use_both = bool(common.get("has_time") or common.get("has_area"))
+    # s02のAI判定を優先、なければ共通軸の有無で判断
+    verdict_path = work_dir / "02_verdict.json"
+    verdict = read_json(verdict_path) if verdict_path.exists() else {}
+    use_both = verdict.get(
+        "combination_viable", bool(common.get("has_time") or common.get("has_area"))
+    )
+    stronger = verdict.get("stronger_dataset", "A")
+    ai_angle = verdict.get("analysis_angle", "")
 
     if use_both:
-        analysis_target = """2つのデータセットを組み合わせた分析を行う。
-df_a と df_b の両方が引数として渡される。
-共通軸（@time や @area）でマージまたは並列比較して分析すること。"""
+        analysis_target = (
+            "2つのデータセットを組み合わせて分析する。df_a と df_b の両方が引数として渡される。"
+        )
         func_sig = "def analyze(df_a, df_b):"
-        df_desc = f"""データセットA列: {meta_a["columns"]}
-データセットB列: {meta_b["columns"]}
-共通軸: {common["common_columns"]}"""
+        primary_meta = meta_a
+        secondary_note = (
+            f"\nデータセットB列: {meta_b['columns']}\n共通軸: {common.get('common_columns', [])}"
+        )
     else:
-        analysis_target = """共通軸がないため、より行数が多いデータセットを単独で分析する。
-df_a のみが引数として渡される。"""
+        # 強いデータ1本に絞る
+        primary_meta = meta_a if stronger == "A" else meta_b
+        secondary_meta = meta_b if stronger == "A" else meta_a
+        analysis_target = (
+            f"データセット{stronger}（{primary_meta['table']['title']}）を単独で分析する。"
+            f"\nデータセット{'B' if stronger == 'A' else 'A'}（{secondary_meta['table']['title']}）は"
+            f"組み合わせ不可と判定されたため使用しない。"
+            f"\ndf_a には{stronger}のデータが入っている。df_b は無視してよい。"
+        )
         func_sig = "def analyze(df_a, df_b=None):"
-        df_desc = f"""データセットA列: {meta_a["columns"]}
-データセットB列: {meta_b["columns"]}（参考のみ）"""
+        secondary_note = ""
+
+    angle_hint = f"\n【推奨する分析の切り口】{ai_angle}" if ai_angle else ""
 
     prompt = f"""あなたはデータ分析エンジニアです。
-
+{angle_hint}
 【データ理解】
-{reading}
+{reading[:800]}
 
-【{analysis_target}】
+【分析対象】
+{analysis_target}
 
-【列名（@プレフィックスに注意）】
-データセットA:
-{_col_examples(meta_a)}
-
-データセットB:
-{_col_examples(meta_b)}
-
-{df_desc}
+【列名（@プレフィックスに注意・必ずこの名前を使うこと）】
+データセット{"A または B" if use_both else stronger}:
+{_col_examples(primary_meta)}
+{secondary_note}
 
 以下の2ブロックを順番に出力してください:
 
@@ -87,6 +101,7 @@ df_a のみが引数として渡される。"""
         "hypothesis": "",
         "analysis_code": f"{func_sig}\n    return {{}}",
         "use_both_datasets": use_both,
+        "primary_dataset": "AB" if use_both else stronger,
     }
     try:
         m_json = re.search(r"```json\s*(\{.*?\})\s*```", raw, re.DOTALL)
@@ -99,5 +114,6 @@ df_a のみが引数として渡される。"""
         print(f"  [WARN] パース失敗: {e}")
 
     write_json(work_dir / "03_plan.json", plan)
-    print(f"  分析方針: {plan['angle']}")
+    mode = "2DS組み合わせ" if use_both else f"{stronger}単独"
+    print(f"  分析方針: [{mode}] {plan['angle']}")
     return plan
