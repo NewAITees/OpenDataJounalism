@@ -1,6 +1,6 @@
 ollama:
   url: "http://localhost:11434/api/generate"
-  model: "qwen3.5:9b"
+  model: "gemma4:26b"
   timeout: 600
   options:
     temperature: 0.7
